@@ -48,8 +48,8 @@ public class ReservationController {
         RevervationIdWithOccupancies revervationIdWithOccupancies = service.saveReservation(reservation.toEntity());
         int reservationId = revervationIdWithOccupancies.getReservationId();
 
-        // invalidate memcached only after database transaction has finished successfully
-        occupancyCacheService.invalidateCache(revervationIdWithOccupancies.getChangedOccupancies());
+//        // invalidate memcached only after database transaction has finished successfully
+//        occupancyCacheService.invalidateCache(revervationIdWithOccupancies.getChangedOccupancies());
 
         return new ResponseEntity<>(String.format("%010d", reservationId), HttpStatus.OK);
     }
@@ -60,8 +60,8 @@ public class ReservationController {
         reservationDTO.setId(reservationId);
         List<Occupancy> occupancies = service.changeReservation(reservationDTO.toEntity());
 
-        // invalidate memcached only after database transaction has finished successfully
-        occupancyCacheService.invalidateCache(occupancies);
+//        // invalidate memcached only after database transaction has finished successfully
+//        occupancyCacheService.invalidateCache(occupancies);
 
         return new ResponseEntity<>(HttpStatus.OK);
     }
@@ -70,8 +70,8 @@ public class ReservationController {
     public ResponseEntity<Void> cancelReservation(@PathVariable Integer reservationId) {
         List<Occupancy> occupancies = service.cancelReservation(reservationId);
 
-        // invalidate memcached only after database transaction has finished successfully
-        occupancyCacheService.invalidateCache(occupancies);
+//        // invalidate memcached only after database transaction has finished successfully
+//        occupancyCacheService.invalidateCache(occupancies);
 
         return new ResponseEntity<>(HttpStatus.OK);
     }

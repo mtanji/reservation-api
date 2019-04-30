@@ -20,7 +20,6 @@ public abstract class BaseControllerTest {
         return new HttpEntity<>(body, headers);
     }
 
-
     protected void cleanUpDatabase() {
         if (getOccupancyDAO() != null) {
             for (Occupancy occupancy : getOccupancyDAO().findAll()) {

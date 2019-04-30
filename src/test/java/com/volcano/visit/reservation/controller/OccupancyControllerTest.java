@@ -63,7 +63,7 @@ public class OccupancyControllerTest extends BaseControllerTest {
         memcachedService.flush();
     }
 
-    @Test(timeout = 2000)
+    @Test(timeout = 3000)
     public void givenOccupancyQueryWhenSubsequentQueryThenReturnFromCache() {
         // Arrange
         LocalDate tomorrow = LocalDate.now().plusDays(1);
@@ -73,8 +73,10 @@ public class OccupancyControllerTest extends BaseControllerTest {
                 .postForEntity("/api/reservation/", reservationToSave, String.class);
 
         // Act
-        for (int i = 0; i < 5; i++) {
+        int repetition = 5;
+        for (int i = 0; i < repetition; i++) {
             // DEV profile causes db call to take reservation.occupancy.sleep milliseconds
+            // Thus, test timeout must be less than (repetition * reservation.occupancy.sleep) to be a valid test
             ResponseEntity<Integer> response = template
                     .exchange("/api/occupancy/date/" + tomorrow.toString(), HttpMethod.GET, null,
                             new ParameterizedTypeReference<Integer>() {

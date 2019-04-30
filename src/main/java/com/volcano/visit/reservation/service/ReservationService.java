@@ -19,6 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +48,10 @@ public class ReservationService implements IReservationService {
     private MemcachedService memcache;
 
     @Override
+    @Retryable(
+            value = {ObjectOptimisticLockingFailureException.class},
+            maxAttempts = 10,
+            backoff = @Backoff(delay = 1000, multiplier = 10, random = true))
     public RevervationIdWithOccupancies saveReservation(Reservation reservation) {
         // execute validations
         validateDateRange(reservation);
@@ -58,6 +65,9 @@ public class ReservationService implements IReservationService {
         incrementOccupanciesByNumberOfPeople(occupancies, numberOfPeople);
         Reservation savedReservation = reservationDAO.save(reservation);
         logger.info("saved: " + savedReservation);
+
+        // invalidate memcached only after database transaction has finished successfully
+        occupancyCacheService.invalidateCache(occupancies);
 
         return new RevervationIdWithOccupancies(savedReservation.getId(), occupancies);
     }
@@ -125,6 +135,9 @@ public class ReservationService implements IReservationService {
         // save updated reservation
         saveReservation(reservation);
 
+        // invalidate memcached only after database transaction has finished successfully
+        occupancyCacheService.invalidateCache(occupancies);
+
         return occupancies;
     }
 
@@ -138,6 +151,9 @@ public class ReservationService implements IReservationService {
 
         // delete reservation
         reservationDAO.deleteById(reservationId);
+
+        // invalidate memcached only after database transaction has finished successfully
+        occupancyCacheService.invalidateCache(occupancies);
 
         return occupancies;
     }
